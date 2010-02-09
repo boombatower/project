@@ -262,6 +262,25 @@ function project_release_views_data() {
     ),
   );
 
+  // version_extra_delta
+  $data['project_release_nodes']['version_extra_delta'] = array(
+    'title' => t('Extra version delta value'),
+    'help' => t('The sorting number for the extra version information for this release.'),
+    'field' => array(
+      'handler' => 'views_handler_field_numeric',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
+  );
+
   // version_api_tid
   if (module_exists('taxonomy')) {
     $vocabulary = taxonomy_vocabulary_load(_project_release_get_api_vid());
