@@ -583,6 +583,12 @@ function package_release_contrib($type, $nid, $project_short_name, $version, $ta
         }
         $files[] = $core_file_path;
 
+        // Development releases may have changed package contents -- clear out
+        // their package item summary so a fresh item summary will be inserted.
+        if ($type == 'branch' && module_exists('project_package')) {
+          db_query("DELETE FROM {project_package_local_release_item} WHERE package_nid = %d", $nid);
+        }
+
         // Core was built without the drupal.org drush extension, so the
         // package item for core isn't in the package contents file. Retrieve
         // it manually.
