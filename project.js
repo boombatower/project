@@ -4,15 +4,18 @@ Drupal.behaviors.projectAuto = function (context) {
   // The initially selected term, if any.
   var tid;
   $('div.project-taxonomy-element input:not(.projectAuto-processed)', context).addClass('projectAuto-processed').each(function () {
-      if (this.checked) {
-        tid = this.value;
-      }
-      Drupal.projectMoveElement(this.value);
-    })
-    .click(function () {
+    if (this.checked) {
+      tid = this.value;
+    }
+    Drupal.projectMoveElement(this.value);
+    $(this).click(function () {
       Drupal.projectSetTaxonomy(this.value);
     });
-  Drupal.projectSetTaxonomy(tid);
+  });
+  // Only reset taxonomy selectors when initially attaching on edit forms.
+  if (tid) {
+    Drupal.projectSetTaxonomy(tid);
+  }
 }
 
 Drupal.projectMoveElement = function(tid) {
