@@ -24,6 +24,8 @@ function project_uninstall() {
   foreach ($variables as $variable) {
     variable_del($variable);
   }
+  db_query("DELETE FROM {variable} WHERE name LIKE 'project_type_associated_tid_%'");
+  cache_clear_all('variables', 'cache');
 }
 
 /**
