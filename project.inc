@@ -376,11 +376,14 @@ function project_project_nodeapi(&$node, $op, $arg) {
   $language = isset($node->language) ? $node->language : '';
   switch ($op) {
     case 'presave':
-      // Remove terms from vocabularies that have associations for other project_types.
-      foreach ($node->taxonomy as $vid => $terms) {
-        $associated = variable_get('project_type_associated_tid_' . $vid, FALSE);
-        if ($associated && $associated != $node->project_type) {
-          unset($node->taxonomy[$vid]);
+      // Remove terms from vocabularies that have associations for other
+      // project types.
+      if (!empty($node->taxonomy)) {
+        foreach ($node->taxonomy as $vid => $terms) {
+          $associated = variable_get('project_type_associated_tid_' . $vid, FALSE);
+          if ($associated && $associated != $node->project_type) {
+            unset($node->taxonomy[$vid]);
+          }
         }
       }
       break;
