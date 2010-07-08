@@ -521,7 +521,7 @@ function project_sort_freetext_submit($form, &$form_state) {
 //----------------------------------------
 
 /**
- * Perform the business logic to 
+ * Perform the business logic to
  */
 function project_solr_render_search_result($result) {
   $project = node_load($result->nid);

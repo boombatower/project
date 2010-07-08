@@ -26,7 +26,7 @@
  */
 ?>
 <?php if (!empty($project->new_date)) { ?>
-  <h3><?php print format_date($project->new_date, 'custom', 'F j, Y'); ?></h3>  
+  <h3><?php print format_date($project->new_date, 'custom', 'F j, Y'); ?></h3>
 <?php } ?>
 
 <div class="<?php print $project->class; ?>">

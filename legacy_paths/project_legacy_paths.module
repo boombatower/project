@@ -85,7 +85,7 @@ function project_legacy_paths_page_callback($top_level_term, $sort_method = NULL
     return MENU_NOT_FOUND;
   }
 
-  // Validate $category_tid. 
+  // Validate $category_tid.
   if (isset($category_tid)) {
     if (!is_numeric($category_tid)) {
       return MENU_NOT_FOUND;

@@ -11,6 +11,6 @@
  *
  */
 
-class project_release_table_plugin_style extends views_plugin_style_table { 
+class project_release_table_plugin_style extends views_plugin_style_table {
 }
 

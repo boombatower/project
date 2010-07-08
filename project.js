@@ -23,7 +23,7 @@ Drupal.projectMoveElement = function(tid) {
   // project taxonomy fieldset (similar to module sub-terms)
   $('.related-tid-' + tid).each(function() {
     $('#edit-tid-' + tid + '-wrapper').append($(this).parent().remove());
-  }); 
+  });
 }
 
 Drupal.projectSetTaxonomy = function (tid) {
