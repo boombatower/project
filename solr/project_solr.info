@@ -4,5 +4,5 @@ description = Provides integration with ApacheSolr for facet-based project brows
 package = Project
 dependencies[] = project
 dependencies[] = taxonomy
-;dependencies[] = apachesolr
+dependencies[] = apachesolr
 core = 6.x
