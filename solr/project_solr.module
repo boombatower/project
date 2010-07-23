@@ -484,6 +484,7 @@ function project_solr_block($op = 'list', $delta = 0, $edit = array()) {
  * Build project browsing navigation form.
  */
 function project_solr_browse_projects_form(&$form_state, $parent_term) {
+  drupal_add_css(drupal_get_path('module', 'project_solr') .'/project_solr.css');
   $response = apachesolr_static_response_cache();
   $query = apachesolr_current_query();
 
