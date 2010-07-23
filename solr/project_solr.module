@@ -589,7 +589,7 @@ function project_solr_browse_projects_form(&$form_state, $parent_term) {
   $solrsort[0] = preg_replace('/_[0-9]+$/', '', $solrsort[0]);
   $solrsort = implode(' ', $solrsort);
   if (empty($solrsort) && empty($form['text']['#default_value'])) {    
-    $solrsort = 'sort_title asc';
+    $solrsort = variable_get('project_solr_default_sort', 'sort_title asc');
   }
 
   $form['solrsort'] = array(
@@ -605,7 +605,7 @@ function project_solr_browse_projects_form(&$form_state, $parent_term) {
   );
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Submit'),
+    '#value' => t('Search'),
   );
   return $form;
 }
