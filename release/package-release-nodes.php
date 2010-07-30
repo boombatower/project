@@ -339,7 +339,7 @@ function package_release_core($type, $nid, $project_short_name, $version, $tag) 
   $info_files = array();
   $exclude = array('.', '..', 'LICENSE.txt');
   $youngest = file_find_youngest($release_file_id, 0, $exclude, $info_files);
-  if ($type == 'branch' && $tgz_exists && filectime($full_dest_tgz) + 300 > $youngest) {
+  if ($type == 'branch' && $tgz_exists && filemtime($full_dest_tgz) + 300 > $youngest) {
     // The existing tarball for this release is newer than the youngest
     // file in the directory, we're done.
     return 'no-op';
@@ -419,7 +419,7 @@ function package_release_contrib($type, $nid, $project_short_name, $version, $ta
 
   $info_files = array();
   $youngest = file_find_youngest($project_short_name, 0, $exclude, $info_files);
-  if ($type == 'branch' && $tgz_exists && filectime($full_dest_tgz) + 300 > $youngest) {
+  if ($type == 'branch' && $tgz_exists && filemtime($full_dest_tgz) + 300 > $youngest) {
     // The existing tarball for this release is newer than the youngest
     // file in the directory, we're done.
     return 'no-op';
