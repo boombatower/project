@@ -628,6 +628,7 @@ function project_solr_browse_projects_form(&$form_state, $parent_term) {
 }
 
 function project_solr_browse_projects_form_submit($form, &$form_state) {
+  include_once drupal_get_path('module', 'project_solr') .'/ProjectSolrQuery.php';
   $query = new ProjectSolrQuery(apachesolr_get_solr(), $form_state['values']['text'], '', '', $form_state['values']['path']);
 
   if (!empty($form_state['values']['tid'])) {
