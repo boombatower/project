@@ -728,7 +728,14 @@ function project_solr_browse_projects_form_submit($form, &$form_state) {
   if (!empty($form_state['values']['text'])) {
     $query_values['text'] = $query->get_query_basic();
   }
-  $form_state['redirect'] = array($query->get_path(), $query_values);
+  // By setting this as an array, FAPI is going to hand it to drupal_goto().
+  // drupal_goto() itself doesn't care about the keys, but we define them here
+  // to make the code more self-documenting, especially if people are trying
+  // to alter this form (e.g. in drupalorg_search.module).
+  $form_state['redirect'] = array(
+    'path' => $query->get_path(),
+    'query' => $query_values,
+  );
 }
 /**
  * Append the API tid to selected fields that might be in the string.
