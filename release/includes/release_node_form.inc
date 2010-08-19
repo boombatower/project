@@ -24,7 +24,7 @@ function _project_release_form(&$release, &$form_state) {
     }
     // Make sure this user should have permissions to add releases for
     // the requested project
-    if (!project_check_admin_access($project)) {
+    if (!project_user_access($project, 'administer releases')) {
       drupal_access_denied();
       module_invoke_all('exit');
       exit;
