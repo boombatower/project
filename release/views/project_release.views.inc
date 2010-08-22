@@ -429,6 +429,17 @@ function project_release_views_data() {
       'label' => t('Project node'),
     ),
   );
+  $data['project_release_supported_versions']['tid'] = array(
+    'title' => t('Supported API Compatibility term'),
+    'help' => t('The term ID of a supported API compatibility version.'),
+    'field' => array(
+      'handler' => 'views_handler_field_taxonomy',
+      'click sortable' => FALSE,
+    ),
+    'filter' => array(
+      'handler' => 'project_release_handler_filter_version_api_tid',
+    ),
+  );
   $data['project_release_supported_versions']['supported'] = array(
     'title' => t('Supported'),
     'help' => t('Is the specific branch supported by a given project.'),

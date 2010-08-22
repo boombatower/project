@@ -2168,3 +2168,12 @@ function project_release_preprocess_views_view_table($variables) {
   }
 }
 
+/**
+ * Implement hook_views_default_views_alter().
+ */
+function project_release_views_default_views_alter(&$views) {
+  $path = drupal_get_path('module', 'project_release');
+  require_once("$path/views/project_release.views_default.inc");
+  _project_release_views_default_views_alter($views);
+}
+

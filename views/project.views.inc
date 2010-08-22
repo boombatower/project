@@ -360,6 +360,14 @@ function project_views_plugins() {
         'path' => drupal_get_path('module', 'project') .'/views/plugins',
       ),
     ),
+    'argument default' => array(
+      'project_plugin_argument_default_project_type' => array(
+        'title' => t('Project type from URL'),
+        'handler' => 'project_plugin_argument_default_project_type',
+        'path' => $project_path . '/views/plugins',
+        'parent' => 'fixed', // so that the parent class is included
+      ),
+    ),
   );
 }
 
