@@ -13,7 +13,7 @@
  *
  * The directory should be empty since it will be cleared before each checkout.
  */
-define('PROJECT_RELEASE_INFO_BATCH_DIRECTORY', '/home/boombatower/software/drupal-6/sites/pift.d6x.loc/tmp');
+define('PROJECT_RELEASE_INFO_BATCH_DIRECTORY', '/tmp/project-info');
 
 /**
  * Load Drupal implementation by default.
