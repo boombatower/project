@@ -2209,13 +2209,7 @@ function project_release_views_default_views_alter(&$views) {
  *   Array of component information.
  */
 function project_release_component_load($component_id) {
-  static $components = array();
-
-  if (!isset($components[$component_id])) {
-    $result = db_query('SELECT * FROM {project_release_component} WHERE component_id = %d', $component_id);
-    $components[$component_id] = db_fetch_array($result);
-  }
-  return $components[$component_id];
+  return db_fetch_array(db_query('SELECT * FROM {project_release_component} WHERE component_id = %d', $component_id));
 }
 
 /**
@@ -2247,10 +2241,14 @@ function project_release_get_components($release_nid) {
  *   List of dependencies.
  */
 function project_release_component_dependencies_load_all($component_id) {
-  $result = db_query('SELECT target_id FROM {project_release_dependency} WHERE source_id = %d', $component_id);
+  $result = db_query('SELECT c.*
+    FROM {project_release_dependency} d
+    JOIN {project_release_component} c
+      ON c.component_id = d.target_id
+    WHERE source_id = %d', $component_id);
   $dependencies = array();
-  while ($dependency_id = db_result($result)) {
-    $dependencies[] = project_release_component_load($dependency_id);
+  while ($dependency = db_fetch_array($result)) {
+    $dependencies[] = $dependency;
   }
   return $dependencies;
 }
