@@ -7,3 +7,5 @@ dependencies[] = taxonomy
 dependencies[] = upload
 dependencies[] = views
 core = 6.x
+
+test_dependencies[] = pift

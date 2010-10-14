@@ -1,0 +1,6 @@
+; $Id$
+name = Project info foo
+description = Test module for project_release_info. (do not enable)
+package = Project
+version = 1.0
+core = 6.x

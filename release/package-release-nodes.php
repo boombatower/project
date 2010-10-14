@@ -316,6 +316,8 @@ function package_release_core($type, $nid, $project_short_name, $version, $tag) 
   global $tmp_dir, $repositories, $dest_root, $dest_rel;
   global $cvs, $tar, $gzip, $rm;
 
+  module_load_include('drupal.inc', 'project_release');
+
   if (!drupal_chdir($tmp_dir)) {
     return 'error';
   }
@@ -353,6 +355,9 @@ function package_release_core($type, $nid, $project_short_name, $version, $tag) 
     }
   }
 
+  // Process the module .info files.
+  package_release_info_process_all($nid, $info_files, $project_short_name, $version);
+
   if (!drupal_exec("$tar -c --file=- $release_file_id | $gzip -9 --no-name > $full_dest_tgz")) {
     return 'error';
   }
@@ -378,6 +383,8 @@ function package_release_contrib($type, $nid, $project_short_name, $version, $ta
   global $cvs, $tar, $gzip, $rm, $ln;
   global $drush, $drush_make_dir;
   global $license, $trans_install;
+
+  module_load_include('drupal.inc', 'project_release');
 
   // Files to ignore when checking timestamps:
   $exclude = array('.', '..', 'LICENSE.txt');
@@ -432,6 +439,9 @@ function package_release_contrib($type, $nid, $project_short_name, $version, $ta
       return 'error';
     }
   }
+
+  // Process the module .info files.
+  package_release_info_process_all($nid, $info_files, $project_short_name, $version);
 
   // Link not copy, since we want to preserve the date...
   if (!drupal_exec("$ln -sf $license $project_short_name/LICENSE.txt")) {

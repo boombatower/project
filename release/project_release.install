@@ -380,6 +380,72 @@ function project_release_schema() {
     'primary key' => array('nid', 'uid'),
   );
 
+  $schema['project_release_component'] = array(
+    'description' => 'The component(s) contained by a project release.',
+    'fields' => array(
+      'component_id' => array(
+        'description' => 'Unique component ID.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'release_nid' => array(
+        'description' => 'The {node}.nid of the project_release node that includes a component.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'The machine readable name of a component.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'title' => array(
+        'description' => 'The human readable name of a component',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'description' => array(
+        'description' => 'A description of a component.',
+        'type' => 'text',
+        'size' => 'medium'
+      ),
+    ),
+    'primary key' => array('component_id'),
+    'indexes' => array(
+      'release_nid' => array('release_nid'),
+      'name' => array('name'),
+    ),
+  );
+
+  $schema['project_release_dependency'] = array(
+    'description' => 'The dependencies of a component.',
+    'fields' => array(
+      'source_id' => array(
+        'description' => 'ID of a component.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'target_id' => array(
+        'description' => 'ID of a component that the component is dependent upon.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'dependency_type' => array(
+        'description' => '@todo',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('source_id', 'target_id'),
+  );
+
   return $schema;
 }
 
@@ -782,5 +848,79 @@ function project_release_update_6010() {
     $ret[] = update_sql("INSERT INTO {project_release_project_maintainer} (nid, uid, administer_releases) SELECT cpm.nid, cpm.uid, 1 FROM {cvs_project_maintainers} cpm INNER JOIN {node} n ON cpm.nid = n.nid WHERE cpm.uid != n.uid");
   }
 
+  return $ret;
+}
+
+/**
+ * Create project dependency info tables.
+ */
+function project_release_update_6011() {
+  $ret = array();
+  if (!db_table_exists('project_release_component')) {
+    db_create_table($ret, 'project_release_component', array(
+      'fields' => array(
+        'component_id' => array(
+          'description' => 'Unique component ID.',
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'release_nid' => array(
+          'description' => 'The {node}.nid of the project_release node that includes a component.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'name' => array(
+          'description' => 'The machine readable name of a component.',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => '',
+        ),
+        'title' => array(
+          'description' => 'The human readable name of a component',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'description' => array(
+          'description' => 'A description of a component.',
+          'type' => 'text',
+          'size' => 'medium'
+        ),
+      ),
+      'primary key' => array('component_id'),
+      'indexes' => array(
+        'release_nid' => array('release_nid'),
+        'name' => array('name'),
+      ),
+    ));
+  }
+  if (!db_table_exists('project_release_dependency')) {
+    db_create_table($ret, 'project_release_dependency', array(
+      'fields' => array(
+        'source_id' => array(
+          'description' => 'ID of a component.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'target_id' => array(
+          'description' => 'ID of a component that the component is dependent upon.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'dependency_type' => array(
+          'description' => '@todo',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('source_id', 'target_id'),
+    ));
+  }
   return $ret;
 }

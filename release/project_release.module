@@ -30,6 +30,15 @@ function project_release_init() {
 }
 
 /**
+ * Implementation of hook_perm().
+ */
+function project_release_perm() {
+  return array(
+    'parse project_release_info batch',
+  );
+}
+
+/**
  * Implementation of hook_menu()
  * @ingroup project_release_core
  */
@@ -65,6 +74,14 @@ function project_release_menu() {
     'weight' => 1,
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/admin.settings.inc',
+  );
+  $items['admin/project/project_release_info/batch'] = array(
+    'title' => 'Parse batch releases',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('project_release_info_batch_form'),
+    'access arguments' => array('parse project_release_info batch'),
+    'file' => 'project_release.batch.inc',
+    'type' => MENU_CALLBACK,
   );
 
   // Redirect node/add/project_release/* to node/add/project-release.
@@ -2176,4 +2193,118 @@ function project_release_views_default_views_alter(&$views) {
   require_once("$path/views/project_release.views_default.inc");
   _project_release_views_default_views_alter($views);
 }
+
+/**
+ * @defgroup project_release_info Project release information
+ * @{
+ */
+
+/**
+ * Loads a component.
+ *
+ * @param $component_id
+ *   Component ID to load.
+ *
+ * @return
+ *   Array of component information.
+ */
+function project_release_component_load($component_id) {
+  static $components = array();
+
+  if (!isset($components[$component_id])) {
+    $result = db_query('SELECT * FROM {project_release_component} WHERE component_id = %d', $component_id);
+    $components[$component_id] = db_fetch_array($result);
+  }
+  return $components[$component_id];
+}
+
+/**
+ * Loads the list of components contained by a project release.
+ *
+ * @param $release_nid
+ *   Project release ID.
+ *
+ * @return
+ *   Associative array of components keyed by component name and containing
+ *   array keys: 'name', 'title', 'description'.
+ */
+function project_release_get_components($release_nid) {
+  $result = db_query('SELECT * FROM {project_release_component} WHERE release_nid = %d', $release_nid);
+  $components = array();
+  while ($component = db_fetch_array($result)) {
+    $components[$component['name']] = $component;
+  }
+  return $components;
+}
+
+/**
+ * Gets a list of dependency components for a component.
+ *
+ * @param $component_id
+ *   Component ID to get dependencies for.
+ *
+ * @return
+ *   List of dependencies.
+ */
+function project_release_component_dependencies_load_all($component_id) {
+  $result = db_query('SELECT target_id FROM {project_release_dependency} WHERE source_id = %d', $component_id);
+  $dependencies = array();
+  while ($dependency_id = db_result($result)) {
+    $dependencies[] = project_release_component_load($dependency_id);
+  }
+  return $dependencies;
+}
+
+/**
+ * Recursively determines the list of dependencies of a release.
+ *
+ * @param $release_nid
+ *   Project release ID.
+ *
+ * @return
+ *   List of dependencies of the release.
+ */
+function project_release_get_dependencies($release_nid) {
+  $components = project_release_get_components($release_nid);
+  return _project_release_get_component_dependencies($components);
+}
+
+/**
+ * Recursively determines the list of dependencies for a list of components.
+ *
+ * @param array $components
+ *   List of components to determine the dependencies for.
+ * @param $dependencies
+ *   (Internal) Array of already determined dependencies.
+ *
+ * @return
+ *   Associative array of dependencies keyed by component name and containing
+ *   all component info keys: 'component_id', 'rid', 'name', 'title', and
+ *   'description'.
+ */
+function _project_release_get_component_dependencies(array $components, array $dependencies = array()) {
+  foreach ($components as $component) {
+    // Get all dependencies of the component.
+    $dependencies_new = project_release_component_dependencies_load_all($component['component_id']);
+
+    // Add the new dependencies to the list of dependencies and remove the
+    // dependencies that have already been added.
+    foreach ($dependencies_new as $component_name => $dependency_new) {
+      if (!isset($dependencies[$component_name])) {
+        $dependencies[$component_name] = $dependency_new;
+      }
+      else {
+        unset($dependencies_new[$component_name]);
+      }
+    }
+
+    // Process the dependencies of all the new dependency components.
+    $dependencies = _project_release_get_component_dependencies($dependencies_new, $dependencies);
+  }
+  return $dependencies;
+}
+
+/**
+ * @} End of "defgroup project_release_info".
+ */
 
