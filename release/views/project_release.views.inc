@@ -49,7 +49,7 @@ function project_release_views_data() {
     ),
     // Information for accepting a pid as an argument
     'argument' => array(
-      'handler' => 'views_handler_argument_node_nid',
+      'handler' => 'project_handler_argument_project_nid',
       'name field' => 'title',
       'numeric' => TRUE,
       'validate type' => 'nid',
