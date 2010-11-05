@@ -288,6 +288,11 @@ function project_project_validate(&$node) {
 }
 
 function project_project_set_breadcrumb($node = NULL, $extra = NULL) {
+  $breadcrumb = project_project_get_breadcrumb($node, $extra);
+  drupal_set_breadcrumb($breadcrumb);
+}
+
+function project_project_get_breadcrumb($node = NULL, $extra = NULL) {
   $breadcrumb = array();
   $breadcrumb[] = l(t('Home'), NULL);
 
@@ -324,8 +329,7 @@ function project_project_set_breadcrumb($node = NULL, $extra = NULL) {
   elseif ($extra && !empty($node)) {
     $breadcrumb[] = l($node->title, 'node/'. $node->nid);
   }
-
-  drupal_set_breadcrumb($breadcrumb);
+  return $breadcrumb;
 }
 
 function project_project_view($node, $teaser = false, $page = false) {

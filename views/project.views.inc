@@ -261,6 +261,9 @@ function project_views_handlers() {
       'path' => drupal_get_path('module', 'project') .'/views/handlers',
     ),
     'handlers' => array(
+      'project_handler_argument_project_nid' => array(
+        'parent' => 'views_handler_argument_node_nid',
+      ),
       'project_handler_argument_term_node_tid_depth_project' => array(
         'parent' => 'views_handler_argument_term_node_tid',
       ),
