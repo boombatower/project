@@ -52,7 +52,7 @@ function project_release_info_batch_form(&$form_state) {
       $form['filter']['api']['#default_value'][] = $term->tid;
     }
   }
-  $form['op'] = array('#type' => 'submit', '#value' => t('Submit'));
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'));
 
   return $form;
 }
@@ -140,7 +140,7 @@ function project_release_info_batch_batch_operation_dependencies(&$context) {
     $context['sandbox']['progress']++;
 
     // Only process 20 releases in a single batch operation.
-    if ($i++ == 20) {
+    if (++$i < 20) {
       break;
     }
   }
