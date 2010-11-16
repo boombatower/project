@@ -131,7 +131,7 @@ function project_release_info_batch_batch_operation_dependencies(&$context) {
   foreach ($context['results']['dependencies'] as $rid => $modules_dependencies) {
     $modules = project_release_info_module_list_get($rid);
     foreach ($modules_dependencies as $module => $dependencies) {
-      project_release_info_batch_process_dependencies($rid, $modules[$module], $dependencies);
+      package_release_info_process_dependencies($rid, $modules[$module], $dependencies);
     }
 
     // Remove already processed releases.

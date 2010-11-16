@@ -373,8 +373,3 @@ function project_release_info_batch_process_release(array $release) {
 
   return $dependencies;
 }
-
-function project_release_info_batch_process_dependencies($rid, array $component, array $dependencies) {
-  package_release_info_process_dependencies($rid, $component, $dependencies);
-}
-
