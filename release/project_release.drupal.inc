@@ -8,6 +8,13 @@
  * @author Jimmy Berry ("boombatower", http://drupal.org/user/214218)
  */
 
+/**
+ * Regular expression to match PHP function names. (From Drupal 7)
+ *
+ * @see http://php.net/manual/en/language.functions.php
+ */
+define('DRUPAL_PHP_FUNCTION_PATTERN', '[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*');
+
 module_load_include('package.inc', 'project_release');
 
 /**
@@ -353,7 +360,7 @@ function project_release_info_batch_process_release(array $release) {
 
   // Scan checkout for .info files and create a list in the same format that
   // project release uses, so that standard API functions can be used.
-  $files = file_scan_directory(PROJECT_RELEASE_INFO_BATCH_DIRECTORY . '/' . $directory, '\.info$');
+  $files = file_scan_directory(PROJECT_RELEASE_INFO_BATCH_DIRECTORY . '/' . $directory, '/^' . DRUPAL_PHP_FUNCTION_PATTERN . '\.info$/');
   $info_files = array();
   foreach ($files as $file) {
     $info_files[] = $file->filename;
