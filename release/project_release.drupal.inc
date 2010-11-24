@@ -25,8 +25,8 @@ define('PROJECT_RELEASE_INFO_MINIMUM_API', 6);
 /**
  * Parse Drupal info files for project information.
  *
- * @param $rid
- *   The project release ID.
+ * @param $release_nid
+ *   The project release NID.
  * @param $info_files
  *   List of .info files to be processed.
  * @param $uri
@@ -34,20 +34,20 @@ define('PROJECT_RELEASE_INFO_MINIMUM_API', 6);
  * @param $version
  *   The version of the release being processed.
  */
-function package_release_info_process_all($rid, array $info_files, $uri, $version) {
+function package_release_info_process_all($release_nid, array $info_files, $uri, $version) {
   // Only process .info file for modules that meet the minimum API requirement.
   if (($major = array_shift(explode('.', $version, 2))) && $major >= PROJECT_RELEASE_INFO_MINIMUM_API) {
     // Clear previous records for the release.
-    project_release_info_package_clear($rid);
+    project_release_info_package_clear($release_nid);
 
     $info = package_release_info_parse($info_files);
 
     // Store list of components.
-    $records = project_release_info_package_list_store($rid, $info);
+    $records = project_release_info_package_list_store($release_nid, $info);
 
     // Process list of dependencies to determine the release related to each
     // dependency.
-    package_release_info_process($rid, $records, $info);
+    package_release_info_process($release_nid, $records, $info);
   }
 }
 
@@ -84,8 +84,8 @@ function package_release_info_parse(array $info_files) {
 /**
  * Determine and store the list of dependencies for a release.
  *
- * @param $rid
- *   The project release ID.
+ * @param $release_nid
+ *   The project release NID.
  * @param $records
  *   List of saved component information from
  *   project_release_info_package_list_store().
@@ -93,27 +93,27 @@ function package_release_info_parse(array $info_files) {
  *   Associative array of information from component .info files keyed by component
  *   name and merged with a set of detaults from package_release_info_parse().
  */
-function package_release_info_process($rid, array $records, array $info) {
+function package_release_info_process($release_nid, array $records, array $info) {
   foreach ($info as $component => $component_info) {
     // Merge required dependencies and test dependencies into one array.
     $dependencies = array_merge($component_info['dependencies'], $component_info['test_dependencies']);
-    package_release_info_process_dependencies($rid, $records[$component], $dependencies);
+    package_release_info_process_dependencies($release_nid, $records[$component], $dependencies);
   }
 }
 
 /**
  * Store the list of dependencies for a component of a release.
  *
- * @param $rid
- *   The project release ID.
+ * @param $release_nid
+ *   The project release NID.
  * @param $component
  *   Component information, returned from project_release_info_package_list_store().
  * @param $dependencies
  *   List of dependency component names.
  */
-function package_release_info_process_dependencies($rid, array $component, array $dependencies) {
+function package_release_info_process_dependencies($release_nid, array $component, array $dependencies) {
   // Load the release and determine is core API version.
-  $release = node_load($rid);
+  $release = node_load($release_nid);
   if (!($api_term = package_release_info_core_api($release))) {
     wd_err('ERROR: No core release API term found.');
     return;
@@ -143,7 +143,7 @@ function package_release_info_process_dependencies($rid, array $component, array
       // the smallest release version.
       $best_release = NULL;
       foreach ($releases as $release) {
-        $release_node = node_load($release['rid']);
+        $release_node = node_load($release['release_nid']);
         if ($release_node->project_release['rebuild']) {
           // Release represents a dev branch, store it.
           $best_release = $release;
@@ -167,7 +167,7 @@ function package_release_info_process_dependencies($rid, array $component, array
       // Cycle through each release from highest version number to lowest and
       // select the first dev release that matches the criteria.
       foreach ($releases as $release) {
-        $release_node = node_load($release['rid']);
+        $release_node = node_load($release['release_nid']);
 
         // Get the release version string without the Drupal API part.
         $parts = explode('-', $release_node->project_release['version']);
@@ -211,7 +211,7 @@ function package_release_info_process_dependencies($rid, array $component, array
  *   Core API compatibility tid.
  *
  * @return
- *   List of releases with keys: 'component_id', 'rid'.
+ *   List of releases with keys: 'component_id', 'release_nid'.
  */
 function package_release_info_releases_get($component, $api_tid) {
   $result = db_query("SELECT DISTINCT p.component_id, p.release_nid
