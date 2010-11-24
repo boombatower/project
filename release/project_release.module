@@ -2238,7 +2238,7 @@ function project_release_get_components($release_nid) {
  *   Component ID to get dependencies for.
  *
  * @return
- *   List of dependencies.
+ *   Associative array of dependencies keyed by component name.
  */
 function project_release_component_dependencies_load_all($component_id) {
   $result = db_query('SELECT c.*
@@ -2248,7 +2248,7 @@ function project_release_component_dependencies_load_all($component_id) {
     WHERE source_id = %d', $component_id);
   $dependencies = array();
   while ($dependency = db_fetch_array($result)) {
-    $dependencies[] = $dependency;
+    $dependencies[$dependency['name']] = $dependency;
   }
   return $dependencies;
 }
@@ -2287,12 +2287,12 @@ function _project_release_get_component_dependencies(array $components, array $d
 
     // Add the new dependencies to the list of dependencies and remove the
     // dependencies that have already been added.
-    foreach ($dependencies_new as $component_name => $dependency_new) {
-      if (!isset($dependencies[$component_name])) {
-        $dependencies[$component_name] = $dependency_new;
+    foreach ($dependencies_new as $name => $dependency_new) {
+      if (!isset($dependencies[$name])) {
+        $dependencies[$name] = $dependency_new;
       }
       else {
-        unset($dependencies_new[$component_name]);
+        unset($dependencies_new[$name]);
       }
     }
 
