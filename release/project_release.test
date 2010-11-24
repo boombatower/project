@@ -8,146 +8,166 @@
  * @author Jimmy Berry ("boombatower", http://drupal.org/user/214218)
  */
 
-module_load_include('test', 'pift');
-
 /**
- * Base project_release_info test case.
+ * Base project_release info test case.
  */
-class ProjectInfoTestCase extends PIFTTestCase {
+class ProjectReleaseTestCase extends ProjectWebTestCase {
 
-  /**
-   * Assert that a component has the proper values.
-   *
-   * @param $component
-   *   Component information to check.
-   * @param $component_id
-   *   Component ID.
-   * @param $rid
-   *   Project release ID of which the component is apart.
-   * @param $project
-   *   Project name of which the component is apart.
-   */
-  protected function assertComponent(array $component, $component_id, $rid, $project) {
-    $this->assertEqual($component['component_id'], $component_id, 'Proper component ID found');
-    $this->assertEqual($component['rid'], $rid, 'Proper release ID found');
-    $this->assertEqual($component['name'], $project, 'Proper name found');
-    $this->assertEqual($component['title'], ucfirst(str_replace('_', ' ', $project)), 'Proper title found');
-    $this->assertTrue($component['description'], 'Description found');
+  public function setUp() {
+    parent::setUp('project_release');
   }
 }
 
 /**
- * Ensure that the storage and retrieval API works correctly.
+ * Ensure that the component storage and retrieval API works correctly..
  */
-class ProjectInfoAPITestCase extends ProjectInfoTestCase {
+class ProjectReleaseComponentAPITestCase extends ProjectReleaseTestCase {
 
   public static function getInfo() {
     return array(
-      'name' => 'API',
-      'description' => 'Ensure that the storage and retrieval API works correctly.',
-      'group' => 'Project info',
+      'name' => 'Component API',
+      'description' => 'Ensure that the component storage and retrieval API works correctly.',
+      'group' => 'Project release',
     );
   }
 
-  /**
-   * Ensure that the storage and retrieval API works correctly.
-   */
-  protected function testAPI() {
+  protected function testComponentAPI() {
     module_load_include('package.inc', 'project_release');
 
-    // Ensure that default data is provided properly.
-    $component_id = 1;
-    foreach ($this->releases as $project => $release) {
-      $components = project_release_get_components($release->nid);
-      $this->assertEqual(count($components), 2, 'Two components found');
+    // Create a project and release.
+    $project = $this->createProject();
+    $release = $this->createRelease($project);
 
-      $name = $project;
-      foreach ($components as $component) {
-        $this->assertComponent($component, $component_id, $release->nid, $name);
+    // Store two components for the release.
+    $components = array(
+      'foo' => array(
+        'name' => 'foo',
+        'title' => 'Foo',
+        'description' => 'Foo is not bar.',
+      ),
+      'bar' => array(
+        'name' => 'bar',
+        'title' => 'Bar',
+        'description' => 'Bar is not foo.',
+      ),
+    );
+    $components = project_release_info_package_list_store($release->nid, $components);
+    project_release_info_package_dependencies_store($components['foo']['component_id'], array($components['bar']['component_id']));
 
-        $component = project_release_component_load($component['component_id']);
-        $this->assertComponent($component, $component_id++, $release->nid, $name);
+    // Retrieve stored components and compared with components array.
+    $stored = project_release_get_components($release->nid);
+    $this->assertEqual($stored, $components, 'Components stored and retrieved successfully');
 
-        $name .= $project;
-      }
+    // Retrieve stored component dependency and compare with components array.
+    $dependencies = project_release_component_dependencies_load_all($components['foo']['component_id']);
+    $this->assertEqual(count($dependencies), 1, 'One dependency retrieved for foo');
+    $this->assertEqual(current($dependencies), $components['bar'], 'Component dependency stored and retrieved successfully');
 
-      // Ensure that dependencies are provided properly.
-      $dependencies = project_release_get_dependencies($release->nid);
-      if ($project == 'drupal') {
-        $this->assertFalse($dependencies, 'Drupal core has no dependencies');
-      }
-      else if ($project == 'foo') {
-        $this->assertEqual($dependencies[0]['component_id'], 5, 'Foo depends on bar');
-        $dependencies = project_release_component_dependencies_load_all(3);
-        $this->assertEqual($dependencies[0]['component_id'], 5, 'Foo depends on bar');
-      }
-      else {
-        $this->assertEqual($dependencies[0]['component_id'], 4, 'Bar depends on foo');
-        $dependencies = project_release_component_dependencies_load_all(6);
-        $this->assertEqual($dependencies[0]['component_id'], 4, 'Bar depends on foo');
-      }
-    }
+    // Retrieve stored release dependency and compare with components array.
+    $release_dependencies = project_release_get_dependencies($release->nid);
+    $this->assertEqual($release_dependencies, $dependencies, 'Release dependency stored and retrieved successfully');
+
+    // Load an individual component and ensure that it works properly.
+    $component = project_release_component_load($components['foo']['component_id']);
+    $this->assertEqual($component, $components['foo'], 'Component stored and retrieved successfully');
+
+    // Create a dependency tree and ensure that it is resolved properly.
+    // Foo -> Bar -> Baz.
+    $project2 = $this->createProject();
+    $release2 = $this->createRelease($project2);
+    $component = array(
+      'name' => 'baz',
+      'title' => 'Baz',
+      'description' => 'Baz is not bar.',
+    );
+    $component = current(project_release_info_package_list_store($release2->nid, array($component)));
+    project_release_info_package_dependencies_store($components['bar']['component_id'], array($component['component_id']));
+
+    // Retrieve stored component dependency and compare with component array.
+    $dependencies = project_release_component_dependencies_load_all($components['bar']['component_id']);
+    $this->assertEqual(count($dependencies), 1, 'One dependency retrieved for bar');
+    $this->assertEqual(current($dependencies), $component, 'Component dependency stored and retrieved successfully');
+
+    // Ensure that retreval of the dependency tree is correct.
+    $dependencies = project_release_get_dependencies($release->nid);
+    $this->assertEqual(array_keys($dependencies), array('bar', 'baz'), 'Foo depends on bar and baz');
   }
 }
 
 /**
- * Ensure that the Drupal parsing functions work properly.
+ * Ensure that the Drupal component parsing functions work properly.
  */
-class ProjectInfoDrupalTestCase extends ProjectInfoTestCase {
+class ProjectReleaseComponentDrupalTestCase extends ProjectDrupalOrgWebTestCase {
 
   public static function getInfo() {
     return array(
-      'name' => 'Drupal',
-      'description' => 'Ensure that the Drupal parsing functions work properly.',
-      'group' => 'Project info',
+      'name' => 'Drupal component parsing',
+      'description' => 'Ensure that the Drupal component parsing functions work properly.',
+      'group' => 'Project release',
     );
+  }
+
+  protected function testDrupalComponentParsing() {
+    $this->process();
+
+    // Ensure that the component information is correct.
+    $components = project_release_get_components($this->releases['foo']->nid);
+    $this->assertEqual(array_keys($components), array('project_release_foo'), 'Project foo contains foo');
+    $this->assertEqual($components, array(
+      'project_release_foo' => array(
+        'component_id' => 1,
+        'release_nid' => $this->releases['foo']->nid,
+        'name' => 'project_release_foo',
+        'title' => 'Project release foo',
+        'description' => 'Test module for project_release. (do not enable)',
+      ),
+    ), 'Project foo components contain proper information');
+
+    $components = project_release_get_components($this->releases['bar']->nid);
+    $this->assertEqual(array_keys($components), array('project_release_bar', 'project_release_baz'), 'Project bar contains bar and baz');
+    $this->assertEqual($components, array(
+      'project_release_bar' => array(
+        'component_id' => 2,
+        'release_nid' => $this->releases['bar']->nid,
+        'name' => 'project_release_bar',
+        'title' => 'Project release bar',
+        'description' => 'Test module for project_release. (do not enable)',
+      ),
+      'project_release_baz' => array(
+        'component_id' => 3,
+        'release_nid' => $this->releases['bar']->nid,
+        'name' => 'project_release_baz',
+        'title' => 'Project release baz',
+        'description' => 'Test module for project_release. (do not enable)',
+      ),
+    ), 'Project bar components contain proper information');
+
+    // Ensure that dependencies were parsed properly.
+    $dependencies = project_release_get_dependencies($this->releases['foo']->nid);
+    $this->assertFalse($dependencies, 'No dependencies found for project foo');
+
+    $dependencies = project_release_get_dependencies($this->releases['bar']->nid); // @TODO Should pick up soft dependency.
+    $this->assertEqual(array_keys($dependencies), array('project_release_foo'), 'Project bar depends on component foo');
+
+    // Ensure that parsing creates an error due to the lack of a stable release.
+    $this->assertPackageError('ERROR: No development release with a corresponding stable release was found that matches the requirements for dependency [project_release_foo] of [project_release_bar].');
+
+  // @TODO Figure out what CVS/Version control API stuff needs to be in setup.
+//     $this->createTag('bar', 'DRUPAL-7--1-0');
+//     $this->drupalPost('node/add/project-release/' . $this->projects['bar']->nid, array(), t('Next'));
+//     $edit = array(
+//       'body' => $this->randomString(32),
+//     );
+//     $this->drupalPost(NULL, $edit, t('Save'));
+// 
+//     $this->process();
+// 
+//     $this->assertNoPackageErrors();
   }
 
   /**
-   * Ensure that the Drupal parsing functions work properly.
+   * Process the test modules.
    */
-  protected function testDrupalParsing() {
-    $this->process();
-
-    // Ensure that the components were parsed properly.
-    $component_id = 7;
-    $components = project_release_get_components($this->releases['foo']->nid);
-    $this->assertComponent($components['project_release_info_foo'], $component_id++, $this->releases['foo']->nid, 'project_release_info_foo');
-
-    $components = project_release_get_components($this->releases['bar']->nid);
-    $this->assertComponent($components['project_release_info_bar'], $component_id++, $this->releases['bar']->nid, 'project_release_info_bar');
-    $this->assertComponent($components['project_release_info_barbar'], $component_id++, $this->releases['bar']->nid, 'project_release_info_barbar');
-
-    debug(project_release_get_components($this->releases['foo']->nid));
-    debug(project_release_get_components($this->releases['bar']->nid));
-
-    debug(project_release_component_dependencies_load_all(7));
-    debug(project_release_component_dependencies_load_all(8));
-    debug(project_release_component_dependencies_load_all(9));
-
-    // Ensure that dependencies were parsed properly.
-    debug(project_release_get_dependencies($this->releases['foo']->nid));
-    debug(project_release_get_dependencies($this->releases['bar']->nid));
-
-    // Should have error since there is no stable release of project_release_info_foo.
-    $this->assertPackageError('ERROR: No development release with a corresponding stable release was ' .
-      'found that matches the requirements for dependency [project_release_info_foo] of [project_release_info_bar].');
-
-    $this->createTag('bar', 'DRUPAL-6--1-0');
-//    $this->drupalGet('node/add/project-release/' . $this->projects['bar']->nid);
-
-    $this->drupalPost('node/add/project-release/' . $this->projects['bar']->nid, array(), t('Next'));
-
-    $edit = array(
-      'body' => $this->randomString(32),
-    );
-    $this->drupalPost(NULL, $edit, t('Save'));
-
-    $this->process();
-
-    $this->assertNoPackageErrors();
-  }
-
   protected function process() {
     // Remove all previously existing project_release_info data.
     db_query('DELETE FROM {project_release_dependency}');
@@ -156,26 +176,34 @@ class ProjectInfoDrupalTestCase extends ProjectInfoTestCase {
     // Reset packaging errors.
     wd_err(FALSE, TRUE);
 
-    // Load Drupal specific implementation.
+    // Load Drupal parsing implementation.
     module_load_include('drupal.inc', 'project_release');
 
-    // Parse test modules related to foo and bar projects.
+    // Parse test modules related to projects foo and bar.
     $info_files = array(
-      drupal_get_path('module', 'project_release_info_foo') . '/project_release_info_foo.info',
+      drupal_get_path('module', 'project_release_foo') . '/project_release_foo.info',
     );
-    package_release_info_process_all($this->releases['foo']->nid, $info_files, 'foo', '6.x-1.0');
+    package_release_info_process_all($this->releases['foo']->nid, $info_files, 'foo', '7.x-1.0');
 
     $info_files = array(
-      drupal_get_path('module', 'project_release_info_bar') . '/project_release_info_bar.info',
-      drupal_get_path('module', 'project_release_info_barbar') . '/project_release_info_barbar.info',
+      drupal_get_path('module', 'project_release_bar') . '/project_release_bar.info',
+      drupal_get_path('module', 'project_release_baz') . '/project_release_baz.info',
     );
-    package_release_info_process_all($this->releases['bar']->nid, $info_files, 'bar', '6.x-1.2');
+    package_release_info_process_all($this->releases['bar']->nid, $info_files, 'bar', '7.x-1.2');
   }
 
   protected function createTag($project, $tag, $branch = FALSE) {
     db_query("INSERT INTO {cvs_tags} VALUES (%d, '%s', %d, %d)", $this->projects[$project]->nid, $tag, $branch ? 1 : 0, time());
   }
 
+  /**
+   * Assert that the package error were created.
+   *
+   * @param $message
+   *   The packaging error message.
+   * @return
+   *   TRUE if the assertion succeeded, FALSE otherwise.
+   */
   protected function assertPackageError($message) {
     $found = FALSE;
     foreach (wd_err() as $error) {
@@ -187,6 +215,12 @@ class ProjectInfoDrupalTestCase extends ProjectInfoTestCase {
     return $this->assertTrue($found, 'Found package error [' . $message . ']');
   }
 
+  /**
+   * Assert that no package errors were created.
+   *
+   * @return
+   *   TRUE if the assertion succeeded, FALSE otherwise.
+   */
   protected function assertNoPackageErrors() {
     if (!$this->assertFalse(wd_err(), 'No packaging errors')) {
       foreach (wd_err() as $error) {

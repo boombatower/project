@@ -1,9 +1,0 @@
-; $Id$
-name = Project release info bar
-description = Test module for project_release_info. (do not enable)
-package = Project
-version = 1.0
-core = 6.x
-dependencies[] = project_release_info_foo
-
-test_dependencies[] = project_release_info_barbar

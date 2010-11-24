@@ -5,13 +5,18 @@ class ProjectWebTestCase extends DrupalWebTestCase {
   /**
    * Setup basic tasks for all project issue tests.
    */
-  function setUp() {
+  public function setUp() {
     // Setup the required modules for all tests.
     $modules = func_get_args();
-    $modules = array_merge(array('project'), $modules);
+    $modules = array_merge(array('views', 'project'), $modules);
     // We can't call parent::setUp() with a single array argument, so we need
     // this ugly call_user_func_array().
-    call_user_func_array(array($this, 'parent::setUp'), $modules);
+    if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
+      call_user_func_array('parent::setUp', $modules);
+    }
+    else {
+      call_user_func_array(array($this, 'parent::setUp'), $modules);
+    }
 
     $perms = array('maintain projects', 'access user profiles', 'access projects');
 
@@ -88,8 +93,11 @@ class ProjectWebTestCase extends DrupalWebTestCase {
    *
    * @param $edit array
    *   An array of form values to be passed to DrupalWebTestCase::drupalPost().
+   * @return
+   *    A node object.
+   * @see DrupalWebTestCase::drupalGetNodeByTitle()
    */
-  function createProject($edit = array()) {
+  protected function createProject($edit = array()) {
     $edit += array(
       'title' => $this->randomName(),
       'project[uri]' => $this->randomName(8),
@@ -107,6 +115,43 @@ class ProjectWebTestCase extends DrupalWebTestCase {
     $this->assertRaw(t('!post %title has been created.', array('!post' => 'Project', '%title' => $edit["title"])), t('Project created.'));
 
     return $this->drupalGetNodeByTitle($edit['title']);
+  }
+
+  /**
+   * Helper function for creating a new project release.
+   *
+   * @param $project
+   *   Project node object to create release for.
+   * @param $edit array
+   *   An array of form values to be passed to DrupalWebTestCase::drupalPost().
+   * @return
+   *    A node object.
+   * @see DrupalWebTestCase::drupalGetNodeByTitle()
+   */
+  protected function createRelease($project, $edit = array()) {
+    $edit += array(
+      'project_release[version_major]' => 1,
+      'project_release[version_minor]' => '',
+      'project_release[version_patch]' =>  'x',
+      'project_release[version_extra]' => 'dev',
+      'body' => $this->randomString(128),
+    );
+    $this->drupalGet('node/add/project-release/' . $project->nid);
+    if (!$this->xpath('//input[@name="project_release[version_minor]"]')) {
+      unset($edit['project_release[version_minor]']);
+    }
+    $this->drupalPost('node/add/project-release/' . $project->nid, $edit, t('Save'));
+
+    $version = new stdClass();
+    foreach (array('major', 'minor', 'patch', 'extra') as $field) {
+      $field = 'version_' . $field;
+      $version->$field = isset($edit['project_release[' . $field . ']']) ? $edit['project_release[' . $field . ']'] : NULL;
+    }
+    $version = project_release_get_version($version, $project);
+    $title = $project->project['uri'] . ' ' . $version;
+    $this->assertRaw(t('!post %title has been created.', array('!post' => 'Project release', '%title' => $title)), t('Project release created.'));
+
+    return $this->drupalGetNodeByTitle($title);
   }
 }
 
@@ -350,12 +395,11 @@ class ProjectDrupalOrgWebTestCase extends ProjectWebTestCase {
         'project_type' => $core ? 1 : 2,
         'title' => ucfirst($project),
         'project[uri]' => $project,
-        'body' => $this->randomString(64),
       );
       $this->projects[$project] = $this->createProject($edit);
     }
 
-    foreach ($this->projects as $project) {
+    foreach ($this->projects as $name => $project) {
       $core = ($project->title == 'Drupal') ? TRUE : FALSE;
       // Drupal core requires a special version format string.
       if ($core) {
@@ -369,13 +413,8 @@ class ProjectDrupalOrgWebTestCase extends ProjectWebTestCase {
       $edit = array(
         'taxonomy[3][]' => 8, // 7.x.
         'project_release[version_major]' => $core ? '7' : '1',
-        'project_release[version_patch]' => 'x',
-        'project_release[version_extra]' => 'dev',
-        'body' => $this->randomString(64),
       );
-      $this->drupalPost('node/add/project-release/' . $project->nid, $edit, t('Save'));
-
-      $this->releases[$project->title] = $this->drupalGetNodeByTitle($project->title . ' 7.x' . ($core ? '' : ' -1.x') . '-dev');
+      $this->releases[$name] = $this->createRelease($project, $edit);
     }
   }
 }
