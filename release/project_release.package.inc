@@ -38,7 +38,7 @@ function project_release_info_package_list_store($release_nid, array $info) {
   $records = array();
   foreach ($info as $component => $component_info) {
     $info = array(
-      'rid' => $release_nid,
+      'release_nid' => $release_nid,
       'name' => $component_info['name'],
       'title' => $component_info['title'],
       'description' => $component_info['description'],
